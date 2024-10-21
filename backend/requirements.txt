@@ -1,0 +1,8 @@
+fastapi
+starlette
+authlib
+httpx
+python-jose
+pydantic
+supabase
+uvicorn
