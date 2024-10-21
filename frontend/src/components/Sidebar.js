@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
@@ -14,9 +14,16 @@ const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+    setIsLoggedIn(!!token);
+  }, []);
+
   const handleAuthClick = () => {
-    // TODO: handle auth click
-    setIsLoggedIn(!isLoggedIn);
+    if (isLoggedIn) {
+      localStorage.removeItem("jwtToken");
+      setIsLoggedIn(false);
+    }
   };
 
   const sidebarVariants = {

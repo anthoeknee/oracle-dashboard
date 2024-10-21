@@ -11,15 +11,40 @@ const PersonalityManagement = () => {
 
   const fetchTraits = useCallback(async () => {
     try {
-      const response = await axios.get("http://localhost:8000/traits");
-      const allPersonalities = response.data;
-      setEmotions(allPersonalities.filter((p) => p.type === "emotion"));
-      setTraits(allPersonalities.filter((p) => p.type === "trait"));
+      const token = localStorage.getItem('jwtToken');
+      if (!token) {
+        console.log("No authentication token found. Redirecting to login...");
+        // Redirect to login page or show a login modal
+        return;
+      }
+      const response = await axios.get("http://localhost:8000/personality/traits", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const traits = response.data;
+      console.log("Raw traits data:", traits);
+      const newEmotions = traits.filter((p) => p.type.toLowerCase() === "emotion");
+      const newTraits = traits.filter((p) => p.type.toLowerCase() === "trait");
+      
+      console.log("Filtered emotions:", newEmotions);
+      console.log("Filtered traits:", newTraits);
+      
+      setEmotions(newEmotions);
+      setTraits(newTraits);
       setLastUpdate(Date.now());
+      
+      console.log("Fetched traits:", traits);
+      console.log("New Emotions:", newEmotions);
+      console.log("New Traits:", newTraits);
     } catch (error) {
       console.error("Error fetching traits:", error);
+      if (error.response && error.response.status === 401) {
+        console.log("Unauthorized. Redirecting to login...");
+        // Redirect to login page or show a login modal
+      }
     }
-  }, []);
+  }, []); // Empty dependency array as we don't need any external variables
 
   useEffect(() => {
     fetchTraits();
@@ -41,16 +66,20 @@ const PersonalityManagement = () => {
       console.log("Disconnected from WebSocket");
     };
 
+    ws.onerror = (error) => {
+      console.error("WebSocket error:", error);
+    };
+
     return () => {
       ws.close();
     };
-  }, [fetchTraits]);
+  }, [fetchTraits]); // Add fetchTraits to the dependency array
 
   return (
-    <div className="flex-1 p-8 h-full flex flex-col overflow-hidden bg-gray-900 text-white">
+    <div className="flex-1 p-8 h-full flex flex-col bg-gray-900 text-white">
       <h2 className="text-3xl font-bold mb-6">Personality Management</h2>
 
-      <div className="flex-1 overflow-hidden flex flex-col md:flex-row gap-6">
+      <div className="flex-1 flex flex-col md:flex-row gap-6 min-h-0">
         <div className="md:w-1/3 flex flex-col gap-6 overflow-y-auto pr-3">
           <PersonalityInfo />
           <PersonalitySettings />
@@ -60,7 +89,7 @@ const PersonalityManagement = () => {
       </div>
 
       <p className="text-sm text-gray-400 mt-4">
-        Last updated: {new Date(lastUpdate).toLocaleTimeString()}
+        Last updated: {new Date(lastUpdate).toLocaleString()}
       </p>
     </div>
   );

@@ -6,9 +6,19 @@ const AuthButton = ({ isLoggedIn, onAuthClick, isCollapsed }) => {
   const buttonText = isLoggedIn ? "Sign Out" : "Sign In";
   const icon = isLoggedIn ? <ExitIcon /> : <PersonIcon />;
 
+  const handleAuth = () => {
+    if (isLoggedIn) {
+      // Handle sign out
+      onAuthClick();
+    } else {
+      // Redirect to Discord OAuth login
+      window.location.href = "http://localhost:8000/discord/login";
+    }
+  };
+
   return (
     <motion.button
-      onClick={onAuthClick}
+      onClick={handleAuth}
       className={`w-full flex items-center justify-center p-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200 ${
         isCollapsed ? "px-2" : "px-4"
       }`}

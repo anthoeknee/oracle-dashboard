@@ -41,14 +41,12 @@ oauth.register(
     name='discord',
     client_id=DISCORD_CLIENT_ID,
     client_secret=DISCORD_CLIENT_SECRET,
-    authorize_url='https://discord.com/api/oauth2/authorize',
-    authorize_params=None,
-    authorize_params_provider=None,
-    access_token_url='https://discord.com/api/oauth2/token',
-    access_token_params=None,
-    refresh_token_url=None,
-    redirect_uri=DISCORD_REDIRECT_URI,
-    client_kwargs={'scope': 'identify guilds'},
+    api_base_url='https://discordapp.com/api/',
+    access_token_url='https://discordapp.com/api/oauth2/token',
+    authorize_url='https://discordapp.com/api/oauth2/authorize',
+    client_kwargs={
+        'scope': 'identify email guilds'
+    }
 )
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
@@ -59,6 +57,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
         expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    print(f"Created JWT token: {encoded_jwt}")
     return encoded_jwt
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
@@ -88,15 +87,31 @@ async def login(request: Request):
 @router.get('/auth')
 async def auth(request: Request):
     token = await oauth.discord.authorize_access_token(request)
-    user = await oauth.discord.parse_id_token(request, token)
-    supabase.table('users').upsert({'id': user['id'], 'username': user['username'], 'avatar': user['avatar']}).execute()
+    resp = await oauth.discord.get('users/@me', token=token)
+    user = resp.json()
+    
+    # Prepare user data, excluding email if it's not provided
+    user_data = {
+        'id': user['id'],
+        'username': user['username'],
+        'avatar': user.get('avatar')
+    }
+    if 'email' in user:
+        user_data['email'] = user['email']
+    
+    # Store user info in Supabase
+    try:
+        supabase.table('users').upsert(user_data).execute()
+    except Exception as e:
+        print(f"Error storing user data: {str(e)}")
+        # You might want to log this error or handle it differently
     
     # Create JWT token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user['username']}, expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    return RedirectResponse(url=f"http://localhost:3000/auth/callback?access_token={access_token}")
 
 @router.get('/user')
 async def get_user(current_user: dict = Depends(get_current_user)):
