@@ -75,9 +75,7 @@ const PersonalityCharts = ({ emotions, traits }) => {
     <div className="md:w-2/3 flex flex-col gap-6">
       <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
         <h3 className="text-xl font-semibold mb-4">Debug Information</h3>
-        <p>Emotions count: {emotions.length}</p>
         <p>Traits count: {traits.length}</p>
-        <p>Emotions data: {JSON.stringify(emotions)}</p>
         <p>Traits data: {JSON.stringify(traits)}</p>
       </div>
       {traits.length > 0 && (

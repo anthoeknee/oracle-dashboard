@@ -12,11 +12,13 @@ const PersonalityManagement = () => {
   const fetchTraits = useCallback(async () => {
     try {
       const token = localStorage.getItem('jwtToken');
+      console.log("Token from localStorage:", token);
       if (!token) {
         console.log("No authentication token found. Redirecting to login...");
         // Redirect to login page or show a login modal
         return;
       }
+      console.log("Making request to /personality/traits");
       const response = await axios.get("http://localhost:8000/personality/traits", {
         headers: {
           Authorization: `Bearer ${token}`
@@ -39,9 +41,13 @@ const PersonalityManagement = () => {
       console.log("New Traits:", newTraits);
     } catch (error) {
       console.error("Error fetching traits:", error);
-      if (error.response && error.response.status === 401) {
-        console.log("Unauthorized. Redirecting to login...");
-        // Redirect to login page or show a login modal
+      if (error.response) {
+        console.error("Response status:", error.response.status);
+        console.error("Response data:", error.response.data);
+      }
+      if (error.response && error.response.status === 403) {
+        console.log("Forbidden. Token might be invalid or expired.");
+        // Consider implementing a token refresh mechanism here
       }
     }
   }, []); // Empty dependency array as we don't need any external variables

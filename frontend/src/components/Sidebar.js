@@ -1,29 +1,22 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   HomeIcon,
   BarChartIcon,
   GearIcon,
   QuestionMarkIcon,
   PersonIcon,
+  ExitIcon,
 } from "@radix-ui/react-icons";
-import AuthButton from "./AuthButton";
 
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(true);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    const token = localStorage.getItem("jwtToken");
-    setIsLoggedIn(!!token);
-  }, []);
-
-  const handleAuthClick = () => {
-    if (isLoggedIn) {
-      localStorage.removeItem("jwtToken");
-      setIsLoggedIn(false);
-    }
+  const handleLogout = () => {
+    localStorage.removeItem("jwtToken");
+    navigate("/login");
   };
 
   const sidebarVariants = {
@@ -87,17 +80,29 @@ const Sidebar = () => {
           />
         </ul>
       </nav>
-      <motion.div
-        className="mt-auto pt-4"
-        variants={contentVariants}
-        transition={{ duration: 0.3 }}
+      <motion.button
+        onClick={handleLogout}
+        className={`w-full flex items-center justify-center p-2 rounded-lg text-white bg-red-600 hover:bg-red-700 transition-colors duration-200 mt-auto ${
+          isCollapsed ? "px-2" : "px-4"
+        }`}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
       >
-        <AuthButton
-          isLoggedIn={isLoggedIn}
-          onAuthClick={handleAuthClick}
-          isCollapsed={isCollapsed}
-        />
-      </motion.div>
+        <span className="flex items-center justify-center w-7 h-7">
+          <ExitIcon className="w-5 h-5" />
+        </span>
+        {!isCollapsed && (
+          <motion.span
+            className="ml-2"
+            initial={{ opacity: 0, width: 0 }}
+            animate={{ opacity: 1, width: "auto" }}
+            exit={{ opacity: 0, width: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            Logout
+          </motion.span>
+        )}
+      </motion.button>
     </motion.div>
   );
 };

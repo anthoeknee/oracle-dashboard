@@ -25,7 +25,7 @@ DISCORD_BOT_TOKEN = config('DISCORD_BOT_TOKEN')
 # JWT settings
 SECRET_KEY = config('JWT_SECRET_KEY')
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_DAYS = 30  # Increase token expiration to 30 days
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -54,7 +54,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+        expire = datetime.utcnow() + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     print(f"Created JWT token: {encoded_jwt}")
@@ -107,7 +107,7 @@ async def auth(request: Request):
         # You might want to log this error or handle it differently
     
     # Create JWT token
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token_expires = timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
     access_token = create_access_token(
         data={"sub": user['username']}, expires_delta=access_token_expires
     )
@@ -207,3 +207,14 @@ async def handle_rate_limit(response: httpx.Response):
         await asyncio.sleep(retry_after)
         return True
     return False
+
+@router.get("/callback")
+async def discord_callback(code: str, request: Request):
+    # ... existing code ...
+    access_token = create_access_token(
+        data={"sub": user_id}, expires_delta=access_token_expires
+    )
+    print(f"Created access token: {access_token[:10]}...") # Print first 10 chars for security
+    # ... rest of the function
+
+

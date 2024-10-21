@@ -21,16 +21,19 @@ class JWTBearer(HTTPBearer):
         credentials: HTTPAuthorizationCredentials = await super(JWTBearer, self).__call__(request)
         if credentials:
             if not credentials.scheme == "Bearer":
+                print("Invalid authentication scheme")
                 raise HTTPException(status_code=403, detail="Invalid authentication scheme.")
             if not self.verify_jwt(credentials.credentials):
+                print("Invalid token or expired token")
                 raise HTTPException(status_code=403, detail="Invalid token or expired token.")
             return credentials.credentials
         else:
+            print("No credentials provided")
             raise HTTPException(status_code=403, detail="Invalid authorization code.")
 
     def verify_jwt(self, jwtoken: str) -> bool:
         try:
-            print(f"Attempting to decode token: {jwtoken}")
+            print(f"Attempting to decode token: {jwtoken[:10]}...") # Print first 10 chars for security
             if jwtoken == "undefined":
                 print("Token is 'undefined'")
                 return False
